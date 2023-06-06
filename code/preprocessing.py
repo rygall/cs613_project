@@ -9,6 +9,7 @@ np.set_printoptions(threshold=sys.maxsize)
 data = []
 with open('train.csv') as realtordata:
 
+    # read in data
     real_read = csv.reader(realtordata)
     
     # remove first row and column from data
@@ -28,22 +29,22 @@ with open('train.csv') as realtordata:
         num_of_unique_values[index] = len(counts)
         possible_values.append(junk)
 
-
-    count = 0
+    # loop through each row of data
     for row in temp_data:
         
-        # we use the temp array to preprocess each row
+        # use temp array to store the update feature values for this row
         temp = []
 
         # look through each value in the row
         for index in range(0, len(row)):
             value = None
+            # if it can be converted to an integer, append it to the temp array
             try:
                 value = int(row[index])
                 temp.append(value)
+            # if its a string, one hot encode it and then append the 1xD row to the temp array, value by value
             except:
                 value = row[index]
-                print(value)
                 different_values = int(num_of_unique_values[index])
                 array = np.zeros(different_values)
                 for j in range(0, len(possible_values[index])):
@@ -52,7 +53,6 @@ with open('train.csv') as realtordata:
                 for x in array:
                     temp.append(x)
 
-        print(np.shape(temp))
         # append the new array to the data array
         data.append(temp)
 
