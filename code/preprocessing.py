@@ -109,7 +109,7 @@ def getCategoricalData():
         temp_data = np.array(temp_data)
         temp_data = temp_data[1:, 1:]
 
-        continuous_indexes = [2, 3, 25, 33, 35, 36, 37, 42, 43, 44, 45, 61, 65, 66, 67, 68, 69, 70, 74]
+        continuous_indexes = [2, 3, 25, 33, 35, 36, 37, 42, 43, 44, 45, 61, 65, 66, 67, 68, 69, 70, 74, 75]
 
         # loop through each row of data
         for row in temp_data:
