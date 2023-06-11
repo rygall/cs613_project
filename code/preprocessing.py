@@ -37,7 +37,21 @@ with open('train.csv') as realtordata:
 
         # look through each value in the row
         for index in range(0, len(row)):
+
             value = None
+
+            '''
+            THIS COULD POTENITALLY BE AN EASIER SOLUTION BUT REMOVES WHOLE SAMPLES RATHER THAN FEATURES
+            if value == 'NA':
+                break
+            '''
+            if index == 2: #LotFrontage
+                continue
+            if index == 25: # MasVnrArea
+                continue
+            if index == 58: # GarageYrBlt
+                continue
+
             # if it can be converted to an integer, append it to the temp array
             try:
                 value = int(row[index])
@@ -52,11 +66,11 @@ with open('train.csv') as realtordata:
                         array[j] = 1
                 for x in array:
                     temp.append(x)
-
+        
         # append the new array to the data array
         data.append(temp)
 
-print(data)
 data = np.array(data, dtype=int)
+print(data)
 
 # END OF DATA PREPROCESSING
