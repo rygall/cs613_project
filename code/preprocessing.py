@@ -4,11 +4,6 @@ import sys
 np.set_printoptions(threshold=sys.maxsize)
 
 
-def getBinWidth(data, feature_index, num_of_bins):
-
-    return getBinWidth
-
-
 def getContinousData(zscore=True):
     data = []
     with open('train.csv') as realtordata:
@@ -109,7 +104,7 @@ def getCategoricalData():
         temp_data = np.array(temp_data)
         temp_data = temp_data[1:, 1:]
 
-        continuous_indexes = [2, 3, 25, 33, 35, 36, 37, 42, 43, 44, 45, 61, 65, 66, 67, 68, 69, 70, 74, 75]
+        continuous_indexes = [2, 3, 25, 33, 35, 36, 37, 42, 43, 44, 45, 61, 65, 66, 67, 68, 69, 70, 74]
 
         # loop through each row of data
         for row in temp_data:
@@ -150,8 +145,35 @@ def getCategoricalData():
     classes = data[:, -1:]
     data = data[:, :-1]
 
-    # append classes back onto data
-    data = np.append(data, classes, axis=1)
+    # !! WE SET THIS VALUE !!
+    number_of_bins = 100
 
-    print(data)
-    return data
+    # put prices into bins
+    temp_classes = classes.flatten()
+    temp_classes = np.array(temp_classes, dtype=int)
+    price_range = np.ptp(temp_classes)
+    bin_range = price_range / number_of_bins
+    price_min = np.min(temp_classes)
+    bins = []
+    for i in range(0, number_of_bins):
+        # bin = min value, max value
+        bin = [i, 0, 0]
+        bin[1] = price_min + (i * bin_range)
+        bin[2] = price_min + ((i+1) * bin_range)
+        bins.append(bin)
+
+    # placing samples into bins
+    new_classes = []
+    for i in range(0, len(classes)):
+        sample_price = int(classes[i])
+        bin_assignment = 0
+        for bin in bins:
+            if bin[1] < sample_price <= bin[2]:
+                bin_assignment = bin[0]
+        new_classes.append(bin_assignment)
+
+    # append classes back onto data
+    new_classes = np.atleast_2d(new_classes).T
+    data = np.append(data, new_classes, axis=1)
+
+    return data, bins
