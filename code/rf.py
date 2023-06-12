@@ -205,7 +205,7 @@ def myRF(samples, classes, num_trees):
 
 
 # opening and reading data from data file
-data, bins = data.getCategoricalData()
+data, true_classes, bins = data.getCategoricalData()
 
 # random shuffle data
 np.random.seed(0)
@@ -219,6 +219,7 @@ validation_data = data[split_index:, :-1]
 validation_classes = data[split_index:, -1]
 
 # !! SET NUMBER OF TREES HERE !!
+# !! MUST BE ODD !!
 num_trees = 1
 
 # get random forest
@@ -227,9 +228,47 @@ random_forest = myRF(training_data, training_classes, num_trees)
 # determine predictions for each validation sample using the random forest
 validation_vector = []
 for sample in validation_data:
+    # get prediction from each decision tree
     temp_predictions = []
     for tree in random_forest:
         classification = tree.classify(sample)
-        print(classification)
-        validation_vector.append(classification)
+        temp_predictions.append(classification)
+
+    # determine actual price value
+    prediction_index = np.argmax(temp_predictions)
+    bin_prediction = None
+    try:
+        bin_prediction = int(temp_predictions[prediction_index])
+    except:
+        bin_prediction = 10
+    price_prediction = None
+    for x in bins:
+        bin_value = int(x[0])
+        if bin_prediction == bin_value:
+            price_prediction = (x[2] + x[1]) / 2 
+    # append the price prediction to the validation vector
+    validation_vector.append(price_prediction)
+
+# RMSE
+total_squared_error = 0
+for i in range(0, len(validation_vector)):
+    difference = true_classes[i] - validation_vector[i]
+    squared_error = math.pow(difference, 2)
+    total_squared_error += squared_error
+batch_se = total_squared_error / len(validation_vector)
+rmse = math.sqrt(batch_se)
+print("\nRMSE\n", rmse)
+
+# SMAPE
+total = 0
+for i in range(0, len(validation_vector)):
+    prediction = validation_vector[i]
+    actual = true_classes[i]
+    difference = abs(actual - prediction)
+    sample_smape = difference / (abs(actual) + abs(prediction))
+    total += sample_smape
+smape = (total / len(validation_vector))
+print("\nSMAPE\n", smape)
+print()
+
 

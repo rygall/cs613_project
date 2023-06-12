@@ -144,6 +144,7 @@ def getCategoricalData():
     data = np.array(data)
     classes = data[:, -1:]
     data = data[:, :-1]
+    classes = np.array(classes, dtype=int)
 
     # !! WE SET THIS VALUE !!
     number_of_bins = 100
@@ -176,4 +177,4 @@ def getCategoricalData():
     new_classes = np.atleast_2d(new_classes).T
     data = np.append(data, new_classes, axis=1)
 
-    return data, bins
+    return data, classes, bins
