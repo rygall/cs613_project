@@ -1,7 +1,33 @@
 import numpy as np
 import csv
 import sys
-#np.set_printoptions(threshold=sys.maxsize)
+# np.set_printoptions(threshold=sys.maxsize)
+
+# Lookup Tables
+# Index 11-LandSlope
+LandSlope = {  
+    "Gtl": 1,
+    "Mod": 2,
+    "Sev": 3
+}
+#index 27-ExterQual 28-ExterCond 30-BsmtQual 31-BsmtCond 40-HeatingQC 
+# 53-KitchenQual 57-FireplaceQu 63-GarageQual 64-GarageCond 72-PoolQC
+Quality = { 
+    "Ex": 5,
+    "Gd": 4,
+    "TA": 3,
+    "Fa": 2,
+    "Po": 1,
+    "NA": 0
+}
+# 32-BsmtExposure
+BsmtExposure = {
+    "Gd": 3,
+    "Av": 2,
+    "Mn": 1,
+    "No": 0,
+    "NA": 0
+}
 
 
 def getContinousData(zscore=True):
@@ -10,7 +36,7 @@ def getContinousData(zscore=True):
 
         # read in data
         real_read = csv.reader(realtordata)
-        
+
         # remove first row and column from data
         temp_data = []
         for row in real_read:
@@ -24,13 +50,14 @@ def getContinousData(zscore=True):
         possible_values = []
         temp_data_transpose = np.transpose(temp_data)
         for index in range(0, (np.size(temp_data_transpose, axis=0))):
-            junk, counts = np.unique(temp_data_transpose[index], return_counts=True)
+            junk, counts = np.unique(
+                temp_data_transpose[index], return_counts=True)
             num_of_unique_values[index] = len(counts)
             possible_values.append(junk)
 
         # loop through each row of data
         for row in temp_data:
-            
+
             # use temp array to store the update feature values for this row
             temp = []
 
@@ -40,13 +67,9 @@ def getContinousData(zscore=True):
                 value = None
 
                 # skip the features that contain both integers and strings
-                if index == 2: #LotFrontage
+                if index in [2,25,58]:  # LotFrontage,# MasVnrArea # GarageYrBlt
                     continue
-                if index == 25: # MasVnrArea
-                    continue
-                if index == 58: # GarageYrBlt
-                    continue
-
+                
                 # if it can be converted to an integer, append it to the temp array
                 try:
                     value = int(row[index])
@@ -54,14 +77,21 @@ def getContinousData(zscore=True):
                 # if its a string, one hot encode it and then append the 1xD row to the temp array, value by value
                 except:
                     value = row[index]
-                    different_values = int(num_of_unique_values[index])
-                    array = np.zeros(different_values)
-                    for j in range(0, len(possible_values[index])):
-                        if value == possible_values[index][j]:
-                            array[j] = 1
-                    for x in array:
-                        temp.append(x)
-            
+                    if index ==10 :
+                        temp.append(LandSlope[value])
+                    elif index in [26,27,29,30,39,52,56,62,63,71]:
+                        temp.append(Quality[value])
+                    elif index == 31:
+                        temp.append(BsmtExposure[value])
+                    else:
+                        different_values = int(num_of_unique_values[index])
+                        array = np.zeros(different_values)
+                        for j in range(0, len(possible_values[index])):
+                            if value == possible_values[index][j]:
+                                array[j] = 1
+                        for x in array:
+                            temp.append(x)
+
             # append the new array to the data array
             data.append(temp)
 
@@ -88,7 +118,7 @@ def getCategoricalData():
 
         # read in data
         real_read = csv.reader(realtordata)
-        
+
         # remove first row and column from data
         temp_data = []
         for row in real_read:
@@ -97,7 +127,8 @@ def getCategoricalData():
         temp_data = temp_data[1:, 1:]
 
         # index of each continous feature within the data
-        continuous_indexes = [3, 33, 35, 36, 37, 42, 43, 44, 45, 61, 65, 66, 67, 68, 69, 70, 74]
+        continuous_indexes = [3, 33, 35, 36, 37, 42,
+                              43, 44, 45, 61, 65, 66, 67, 68, 69, 70, 74]
 
         # get the mean for each continuous index
         means = []
@@ -115,23 +146,23 @@ def getCategoricalData():
 
         # loop through each row of data
         for row in temp_data:
-            
+
             # use temp array to store the updated feature values for this row
             temp = []
 
             # look through each value in the row
             for index in range(0, len(row)):
-                
+
                 # skip the features that contain both integers and strings
-                if index == 2: #LotFrontage
+                if index == 2:  # LotFrontage
                     continue
-                if index == 4: 
+                if index == 4:
                     continue
                 if index == 5:
                     continue
-                if index == 25: # MasVnrArea
+                if index == 25:  # MasVnrArea
                     continue
-                if index == 58: # GarageYrBlt
+                if index == 58:  # GarageYrBlt
                     continue
 
                 # get the actual value of the feature
@@ -198,4 +229,6 @@ def getCategoricalData():
 
     return data
 
+
 getCategoricalData()
+
