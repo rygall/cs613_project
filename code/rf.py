@@ -34,7 +34,7 @@ class decisionTree:
     
 
 # returns weighted average entropy of all features
-def theirEntropies(samples, classes):
+def getEntropies(samples, classes):
     
     # loop through each feature
     weighted_average_entropies = []
@@ -102,27 +102,51 @@ def theirEntropies(samples, classes):
                 
 
 
-def myDT(samples, classes, features, parent_classes=None, num_classes=0):
+def myDT(samples, classes, features, feature_values=[], parent_classes=None):
+    
+    # determine all possible values each feature can take on
+    if len(feature_values) == 0:
+        # for each feature
+        for i in range(0, np.size(samples, axis=1)):
+            # for each sample
+            values = []
+            for j in range(0, np.size(samples, axis=0)):
+                sample_feature_value = samples[j][i]
+                new_value = True
+                # check if the sample feature value already exists
+                for k in range(0, np.size(values, axis=0)):
+                    value = values[k]
+                    # if it does already exist, mark new value as false
+                    if sample_feature_value == value:
+                        new_value = False
+                # if this is is a new value, add it to the array
+                if (new_value == True): 
+                    values.append(sample_feature_value)
+            feature_values.append(values)
     
     # if all features are used, return most common class
     if len(features) == 0:
         values, counts = np.unique(parent_classes, return_counts=True)
         index = np.argmax(counts)
+        if index == None:
+            index = random.randint(0, len(values))
         return values[index]
 
     # if all samples is empty, return most common class
     if len(samples) == 0:
         values, counts = np.unique(parent_classes, return_counts=True)
         index = np.argmax(counts)
+        if index == None:
+            index = random.randint(0, len(values))
         return values[index]
-            
+
     # if all samples have the same class, return that class
     elif all(y == classes[0] for y in classes):
         return classes[0]
 
     # get random features
-    if len(features) <= 6:
-        num_random = len(features)
+    if len(features) < 3:
+        num_random = 1
     else:
         num_random = int(len(features) / 3)
     random_features = []
@@ -131,21 +155,19 @@ def myDT(samples, classes, features, parent_classes=None, num_classes=0):
         feat_index = random.randint(0, len(features)-1)
         # add the random feature index to the new feature index array
         random_features.append(features[feat_index])
-        # delete the select random feature from original feature index array
-        features = np.delete(features, feat_index)
     features = random_features
 
     # get average weighted entropy for each feature
-    weighted_average_entropies = theirEntropies(samples, classes)
+    weighted_average_entropies = getEntropies(samples, classes)
 
     # finding minimum entropy feature
     min_entropy_feature_index = None
     min_entropy = sys.maxsize
     for i in range(0, np.size(weighted_average_entropies, axis=0)):
         if (weighted_average_entropies[i] <= min_entropy):
-            if i in features:
+            if i in random_features:
                 min_entropy = weighted_average_entropies[i]
-                min_entropy_feature_index = i  
+                min_entropy_feature_index = i
 
     # create a node for the minimum entropy feature index
     treeRoot = decisionTreeNode(min_entropy_feature_index)
@@ -155,20 +177,8 @@ def myDT(samples, classes, features, parent_classes=None, num_classes=0):
     del_index = features.index(min_entropy_feature_index)
     features = np.delete(features, del_index)
 
-    # determine all possible values the feature can take on
-    values = []
-    for j in range(0, np.size(samples, axis=0)):
-        sample_feature_value = samples[j][min_entropy_feature_index]
-        new_value = True
-        for k in range(0, np.size(values, axis=0)):
-            value = values[k]
-            if sample_feature_value == value:
-                new_value = False
-        if (new_value == True): 
-            values.append(sample_feature_value)
-
     # for each value of best feature
-    for value in values:
+    for value in feature_values[min_entropy_feature_index]:
         # gather all samples that have the best feature as the current value
         value_samples = []
         value_classes = []
@@ -178,7 +188,7 @@ def myDT(samples, classes, features, parent_classes=None, num_classes=0):
                 value_classes.append(classes[k])
         value_samples = np.array(value_samples)
         value_classes = np.array(value_classes)
-        subtree = myDT(value_samples, value_classes, features, classes)
+        subtree = myDT(value_samples, value_classes, features, feature_values, classes)
         tree.attach(value, subtree)
 
     return tree
@@ -195,17 +205,19 @@ def myRF(samples, classes, num_trees):
     for i in range(0, np.size(samples, axis=1)):
         features.append(i)
     
-    # creating N trees
+    # creating N trees with samples/N samples
     for i in range(0, num_trees):
-        tree = myDT(samples, classes, features)
+        split_width = int(len(samples) / num_trees)
+        tree_samples = samples[(split_width*i):(split_width*(i+1)), :]
+        tree_classes = classes[(split_width*i):(split_width*(i+1))]
+        tree = myDT(tree_samples, tree_classes, features)
         random_forest.append(tree)
 
     return random_forest
 
-
-
 # opening and reading data from data file
-data, true_classes, bins = data.getCategoricalData()
+data = data.getCategoricalData()
+data = np.array(data)
 
 # random shuffle data
 np.random.seed(0)
@@ -217,10 +229,10 @@ training_data = data[:split_index, :-1]
 training_classes = data[:split_index, -1]
 validation_data = data[split_index:, :-1]
 validation_classes = data[split_index:, -1]
+validation_classes = np.array(validation_classes, dtype=float)
 
 # !! SET NUMBER OF TREES HERE !!
-# !! MUST BE ODD !!
-num_trees = 1
+num_trees = 9
 
 # get random forest
 random_forest = myRF(training_data, training_classes, num_trees)
@@ -232,27 +244,30 @@ for sample in validation_data:
     temp_predictions = []
     for tree in random_forest:
         classification = tree.classify(sample)
-        temp_predictions.append(classification)
+        if classification == None:
+            continue
+        # determine actual price value
+        price = int(classification)
 
-    # determine actual price value
-    prediction_index = np.argmax(temp_predictions)
-    bin_prediction = None
-    try:
-        bin_prediction = int(temp_predictions[prediction_index])
-    except:
-        bin_prediction = 10
-    price_prediction = None
-    for x in bins:
-        bin_value = int(x[0])
-        if bin_prediction == bin_value:
-            price_prediction = (x[2] + x[1]) / 2 
+        # append the price prediction to the temp array
+        temp_predictions.append(price)
+
+    if len(temp_predictions) == 0:
+        validation_vector.append(100000)
+        continue  
+
+    count = 0
+    for pred in temp_predictions:
+        count += pred
+    mean_prediction = count / len(temp_predictions)
+
     # append the price prediction to the validation vector
-    validation_vector.append(price_prediction)
+    validation_vector.append(mean_prediction)
 
 # RMSE
 total_squared_error = 0
 for i in range(0, len(validation_vector)):
-    difference = true_classes[i] - validation_vector[i]
+    difference = validation_classes[i] - validation_vector[i]
     squared_error = math.pow(difference, 2)
     total_squared_error += squared_error
 batch_se = total_squared_error / len(validation_vector)
@@ -263,7 +278,7 @@ print("\nRMSE\n", rmse)
 total = 0
 for i in range(0, len(validation_vector)):
     prediction = validation_vector[i]
-    actual = true_classes[i]
+    actual = validation_classes[i]
     difference = abs(actual - prediction)
     sample_smape = difference / (abs(actual) + abs(prediction))
     total += sample_smape

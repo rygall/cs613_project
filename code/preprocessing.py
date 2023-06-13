@@ -1,7 +1,7 @@
 import numpy as np
 import csv
 import sys
-np.set_printoptions(threshold=sys.maxsize)
+#np.set_printoptions(threshold=sys.maxsize)
 
 
 def getContinousData(zscore=True):
@@ -39,11 +39,7 @@ def getContinousData(zscore=True):
 
                 value = None
 
-                '''
-                THIS COULD POTENITALLY BE AN EASIER SOLUTION BUT REMOVES WHOLE SAMPLES RATHER THAN FEATURES
-                if value == 'NA':
-                    break
-                '''
+                # skip the features that contain both integers and strings
                 if index == 2: #LotFrontage
                     continue
                 if index == 25: # MasVnrArea
@@ -87,10 +83,6 @@ def getContinousData(zscore=True):
 
 
 def getCategoricalData():
-
-    # get the means of the 
-    continuous_data = getContinousData()
-    means = np.mean(continuous_data, axis=0)
     data = []
     with open('train.csv') as realtordata:
 
@@ -104,12 +96,27 @@ def getCategoricalData():
         temp_data = np.array(temp_data)
         temp_data = temp_data[1:, 1:]
 
-        continuous_indexes = [2, 3, 25, 33, 35, 36, 37, 42, 43, 44, 45, 61, 65, 66, 67, 68, 69, 70, 74]
+        # index of each continous feature within the data
+        continuous_indexes = [3, 33, 35, 36, 37, 42, 43, 44, 45, 61, 65, 66, 67, 68, 69, 70, 74]
+
+        # get the mean for each continuous index
+        means = []
+        # for each continous feature index
+        for cont_index in continuous_indexes:
+            # gather all feature values from each sample
+            values = []
+            for sample in temp_data:
+                value = int(sample[cont_index])
+                values.append(value)
+            # calculate the mean
+            mean = np.sum(values) / len(values)
+            # add the mean to the means array
+            means.append(mean)
 
         # loop through each row of data
         for row in temp_data:
             
-            # use temp array to store the update feature values for this row
+            # use temp array to store the updated feature values for this row
             temp = []
 
             # look through each value in the row
@@ -118,36 +125,46 @@ def getCategoricalData():
                 # skip the features that contain both integers and strings
                 if index == 2: #LotFrontage
                     continue
+                if index == 4: 
+                    continue
+                if index == 5:
+                    continue
                 if index == 25: # MasVnrArea
                     continue
                 if index == 58: # GarageYrBlt
                     continue
 
+                # get the actual value of the feature
                 value = row[index]
 
                 # check if the current feature index is equivalent to a continous feature index
                 for cont_index in continuous_indexes:
                     if index == cont_index:
+                        # if it is, convert to binary feature
                         value = int(value)
-                        if value < means[index]:
+                        # get the mean for the continous feature
+                        mean = means[continuous_indexes.index(index)]
+                        if value < mean:
                             value = '0'
                         else:
                             value = '1'
 
+                # append this to temporary row/sample array
                 temp.append(value)
 
-
-            # append the new array to the data array
+            # append the new row/sample array to the main data array
             data.append(temp)
 
+    '''
     # separate classes from data
     data = np.array(data)
     classes = data[:, -1:]
     data = data[:, :-1]
     classes = np.array(classes, dtype=int)
 
+    ''''''
     # !! WE SET THIS VALUE !!
-    number_of_bins = 100
+    number_of_bins = 100000
 
     # put prices into bins
     temp_classes = classes.flatten()
@@ -172,9 +189,13 @@ def getCategoricalData():
             if bin[1] < sample_price <= bin[2]:
                 bin_assignment = bin[0]
         new_classes.append(bin_assignment)
+    
 
     # append classes back onto data
     new_classes = np.atleast_2d(new_classes).T
     data = np.append(data, new_classes, axis=1)
+    '''
 
-    return data, classes, bins
+    return data
+
+getCategoricalData()
