@@ -153,17 +153,9 @@ def getCategoricalData():
             for index in range(0, len(row)):
 
                 # skip the features that contain both integers and strings
-                if index == 2:  # LotFrontage
+                if index in [2,4,5,25,58,74]:  # LotFrontage  25:# MasVnrArea 58:# GarageYrBlt 74:MiscVal
                     continue
-                if index == 4:
-                    continue
-                if index == 5:
-                    continue
-                if index == 25:  # MasVnrArea
-                    continue
-                if index == 58:  # GarageYrBlt
-                    continue
-
+                
                 # get the actual value of the feature
                 value = row[index]
 
@@ -185,52 +177,29 @@ def getCategoricalData():
             # append the new row/sample array to the main data array
             data.append(temp)
 
-    '''
     # separate classes from data
     data = np.array(data)
     classes = data[:, -1:]
-    data = data[:, :-1]
     classes = np.array(classes, dtype=int)
-
-    ''''''
-    # !! WE SET THIS VALUE !!
-    number_of_bins = 100000
-
-    # put prices into bins
-    temp_classes = classes.flatten()
-    temp_classes = np.array(temp_classes, dtype=int)
-    price_range = np.ptp(temp_classes)
-    bin_range = price_range / number_of_bins
-    price_min = np.min(temp_classes)
-    bins = []
-    for i in range(0, number_of_bins):
-        # bin = min value, max value
-        bin = [i, 0, 0]
-        bin[1] = price_min + (i * bin_range)
-        bin[2] = price_min + ((i+1) * bin_range)
-        bins.append(bin)
-
-    # placing samples into bins
-    new_classes = []
-    for i in range(0, len(classes)):
-        sample_price = int(classes[i])
-        bin_assignment = 0
-        for bin in bins:
-            if bin[1] < sample_price <= bin[2]:
-                bin_assignment = bin[0]
-        new_classes.append(bin_assignment)
+    bin_classes = classify_in_bins(classes)
     
-
-    # append classes back onto data
-    new_classes = np.atleast_2d(new_classes).T
-    data = np.append(data, new_classes, axis=1)
-    '''
+    assert classes.shape == bin_classes.shape
+    
     unique_values = []
     data = np.array(data)
     for i in range(data.shape[1]):
         unique_values.append(np.unique(data[:,i]))
-    return unique_values, data
+    return unique_values, bin_classes, data
 
+def classify_in_bins(classes, binSize = 5000):
+    new_classes = []
+    for i in classes:
+        try:
+            value = int(i)
+            nc = (round(value/binSize) + 1 )*binSize
+            new_classes.append(nc)
+        except:
+            new_classes.append(0)
+    return np.atleast_2d(new_classes).T
 
 getCategoricalData()
-

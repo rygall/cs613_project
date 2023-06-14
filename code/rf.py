@@ -9,11 +9,11 @@ class decisionTreeNode:
     def __init__(self, index):
         self.index = index
 
-
-
 class decisionTree:
     def __init__(self, root):
+        # Root Contains the Attribute Index of the attribute on which tree is built
         self.root = root
+        # Branches contain the Brach Label (Attribute Values for attribute in Root) and Subtree or Leaf node
         self.branches = []
 
     def attach(self, value, dt):
@@ -21,6 +21,9 @@ class decisionTree:
         self.branches.append(branch_node)
 
     def classify(self, sample):
+        if len(self.branches) == 0:
+            #Leaf Node, value in Leaf Node should be classification
+            print("No branches, not handled")
         for branch in self.branches:
             if sample[self.root.index] == branch[0]:
                 try:
@@ -206,7 +209,7 @@ def myRF(samples, classes, num_trees,M,feature_unique_values):
 
 def main():
     # opening and reading data from data file
-    feature_unique_values,data = Data.getCategoricalData()
+    feature_unique_values,bin_classes,data = Data.getCategoricalData()
     data = np.array(data)
 
     # random shuffle data
@@ -217,8 +220,12 @@ def main():
     split_index = int((2/3) * np.size(data, axis=0))
     training_data = data[:split_index, :-1]
     training_classes = data[:split_index, -1]
+    #training_classes = bin_classes[:split_index, -1]
+    assert training_data.shape[0] == training_classes.shape[0]
     validation_data = data[split_index:, :-1]
     validation_classes = data[split_index:, -1]
+    #validation_classes = bin_classes[split_index:, -1]
+    assert validation_data.shape[0] == validation_classes.shape[0]
     validation_classes = np.array(validation_classes, dtype=float)
 
     # !! SET NUMBER OF TREES HERE !!
