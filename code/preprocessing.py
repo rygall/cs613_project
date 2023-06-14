@@ -127,8 +127,7 @@ def getCategoricalData():
         temp_data = temp_data[1:, 1:]
 
         # index of each continous feature within the data
-        continuous_indexes = [3, 33, 35, 36, 37, 42,
-                              43, 44, 45, 61, 65, 66, 67, 68, 69, 70, 74]
+        continuous_indexes = [3, 33, 35, 36, 37, 42,43, 44, 45, 61, 65, 66, 67, 68, 69, 70, 74]
 
         # get the mean for each continuous index
         means = []
@@ -226,8 +225,11 @@ def getCategoricalData():
     new_classes = np.atleast_2d(new_classes).T
     data = np.append(data, new_classes, axis=1)
     '''
-
-    return data
+    unique_values = []
+    data = np.array(data)
+    for i in range(data.shape[1]):
+        unique_values.append(np.unique(data[:,i]))
+    return unique_values, data
 
 
 getCategoricalData()
