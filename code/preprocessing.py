@@ -3,7 +3,7 @@ import csv
 import sys
 # np.set_printoptions(threshold=sys.maxsize)
 
-# Lookup Tables
+# Categorical Ordinal Lookup Tables
 # Index 11-LandSlope
 LandSlope = {  
     "Gtl": 1,
@@ -226,7 +226,3 @@ class Data():
             except:
                 new_classes.append(0)
         return np.atleast_2d(new_classes).T
-
-d = Data()
-print(d.classify_in_bins([10000]))
-

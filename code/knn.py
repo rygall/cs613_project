@@ -91,6 +91,7 @@ def main():
     k=5
     if(len(sys.argv)>1):
         k = int(sys.argv[1])
+    print(f"Executing with K={k}")
     nn = knn(k)
     nn.process()
 

@@ -364,12 +364,13 @@ def main():
     if(len(sys.argv)>1):
         num_trees = int(sys.argv[1])
     if(len(sys.argv)>2):
-        binSize = int(sys.argv[2])
+       epochs = int(sys.argv[2])
+    if(len(sys.argv)>3):
+        eta = float(sys.argv[3])
+    if(len(sys.argv)>3):
+        binSize = int(sys.argv[4])
         bin_classification = True
-    if(len(sys.argv)>3):
-        epochs = int(sys.argv[3])
-    if(len(sys.argv)>3):
-        eta = float(sys.argv[4])
+        
         
     print(f"Running with Parameters:num_trees:{num_trees} binSize:{binSize} bin_classification:{bin_classification} epochs:{epochs} eta:{eta}")
     d = Data(binSize=binSize)
