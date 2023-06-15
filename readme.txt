@@ -14,6 +14,14 @@ Executing the Algorithms: - Note that all code must be executed from "code" fold
 cd code 
 
 1. Executing Linear Regression :
+python3 lr.py {eta} {max_epochs} {min_rmse}
+Parameters :
+eta : learning_rate for LR, Default = 0.01
+max_epochs: Maximum number of epochs to run Default = 300000
+min_rmse: Minimum Error Threshold, Early exit if RMSE < min_rmse  Default = 20000
+
+examples :
+python3 lr.py 0.01
 
 2. Executing KNN:
 python3 knn.py {K}   
