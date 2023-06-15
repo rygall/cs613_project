@@ -1,12 +1,13 @@
 import numpy as np
 import math
-import preprocessing as data
+from preprocessing import Data
 
 # Linear Regression Function
 def myLR(training_data, training_classes, validation_data):
     # PARAMETERS
-    max_epochs = 50000
+    max_epochs = 300000
     learning_rate = 0.01
+    min_rmse = 20000
 
     # generate random weights
     np.random.seed(0)
@@ -17,7 +18,15 @@ def myLR(training_data, training_classes, validation_data):
             # determine all y_hats based on training data
             y_hat = np.matmul(training_data, w)
 
-            # compute log loss for training data and add to tracking array
+            # compute sqaured error for training data and add to tracking array
+            squared_error = np.power((y_hat - training_classes), 2)
+            squared_error = np.sum(squared_error)
+            squared_error = squared_error / len(training_classes)
+            rmse = math.sqrt(squared_error)
+            print(rmse)
+            if rmse < min_rmse:
+                 print(squared_error)
+                 break
              
             # calculate the gradient
             r2 = np.transpose(training_data)
@@ -37,7 +46,8 @@ def myLR(training_data, training_classes, validation_data):
 
 # Data Preprocessing
 # opening and reading data from data file
-data = data.getContinousData()
+preprocesor = Data()
+data = preprocesor.getContinousData()
 
 # random shuffle data
 np.random.seed(0)

@@ -33,7 +33,7 @@ class Data():
     def __init__(self,binSize = 25000) -> None:
         self.binSize = binSize
 
-    def getContinousData(self,zscore=True):
+    def getContinousData(self,zscore=True,pca=False):
         data = []
         with open('train.csv') as realtordata:
 
@@ -108,6 +108,29 @@ class Data():
             mean = np.mean(data, axis=0)
             std = np.std(data, axis=0, ddof=1)
             data = (data - mean) / std
+
+        # reduce dimensionality of data via PCA
+        if pca == True:
+            # get the covariance matrix
+            covariance_matrix = np.cov(data, rowvar=False)
+
+            # get the eigenvalues and eigenvectors
+            eigenvalues, eigenvectors = np.linalg.eig(covariance_matrix)
+
+            # convert eigenvalues to real numbers
+            eigenvalues = np.real(eigenvalues)
+            eigenvectors = np.real(eigenvectors)
+
+            # project data onto N/3 most significant eigenvectors 
+            temp = np.zeros(shape=(len(classes), 1))
+            num_of_eigenvectors = int(np.size(data, axis=1)/3)
+            for i in range(0, num_of_eigenvectors):
+                eigenvector = eigenvectors[:, i]
+                red_feature = np.matmul(data, eigenvector)
+                red_feature = np.atleast_2d(red_feature).T
+                temp = np.append(temp, red_feature, axis=1)
+            temp = np.delete(temp, 1, axis=1)
+            data = temp
 
         # append classes back onto data
         data = np.append(data, classes, axis=1)
@@ -203,3 +226,7 @@ class Data():
             except:
                 new_classes.append(0)
         return np.atleast_2d(new_classes).T
+
+d = Data()
+print(d.classify_in_bins([10000]))
+
