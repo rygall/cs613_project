@@ -49,7 +49,7 @@ class knn():
     def process(self):
         # opening and reading data from data file
         preprocesser = Data()
-        data = preprocesser.getContinousData()
+        data = preprocesser.getContinousData(pca=True)
 
         # random shuffle data
         np.random.seed(0)
