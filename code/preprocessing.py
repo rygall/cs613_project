@@ -203,7 +203,3 @@ class Data():
             except:
                 new_classes.append(0)
         return np.atleast_2d(new_classes).T
-
-d = Data()
-print(d.classify_in_bins([10000]))
-

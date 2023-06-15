@@ -20,10 +20,7 @@ class decisionTree:
         branch_node = [value, dt]
         self.branches.append(branch_node)
 
-    def classify(self, sample):
-        if len(self.branches) == 0:
-            #Leaf Node, value in Leaf Node should be classification
-            print("No branches, not handled")
+    def classify(self, sample):        
         for branch in self.branches:
             if sample[self.root.index] == branch[0]:
                 try:
@@ -33,11 +30,13 @@ class decisionTree:
 
     
 class RandomForst():
-    def __init__(self,preProcessor: Data,num_trees=10) -> None:
+    def __init__(self,preProcessor: Data,num_trees=10,bin_classification=False,epochs=100000,eta=0.01) -> None:
         self.num_trees = num_trees
         self.preProcessor = preProcessor
         #Control Bin Classification Training
         self.bin_classification = False
+        self.epochs = epochs
+        self.eta = eta
 
     def process(self):
         # opening and reading data from data file
@@ -60,6 +59,7 @@ class RandomForst():
         assert self.validation_data.shape[0] == self.validation_classes.shape[0]
         
         M = int(len(self.training_data)/2)
+        print("Generating Random Forest...")
         # get random forest
         random_forest = self.myRF(M,feature_unique_values)
         self.validation(self.training_data,self.training_classes,self.training_prices,random_forest)        
@@ -72,7 +72,7 @@ class RandomForst():
             validation_tree_predictions = np.array(self.tree_predictions)*self.preProcessor.binSize
         else:
             validation_tree_predictions = np.array(self.tree_predictions)
-
+        print("Validation done using Random Forest, running linear regression on reults...")
         VYHat = self.linear_regresssion(training_tree_predictions,self.training_prices,validation_tree_predictions)
 
         # RMSE
@@ -83,7 +83,7 @@ class RandomForst():
             total_squared_error += squared_error
         batch_se = total_squared_error / len(VYHat)
         rmse = math.sqrt(batch_se)
-        print("\n*****RMSE\n", rmse)
+       
 
         # SMAPE
         total = 0
@@ -94,12 +94,11 @@ class RandomForst():
             sample_smape = difference / (abs(actual) + abs(prediction))
             total += sample_smape
         smape = (total / len(VYHat))
-        print("\n*****SMAPE\n", smape)
-        print()
-
+        print(f"Final RMSE={rmse} SMAPE={smape}")
+        
     def linear_regresssion(self, X,Y,VX):
-            max_epochs = 300000
-            learning_rate = 0.0001
+            max_epochs = self.epochs
+            learning_rate = self.eta 
             # insert bias feature            
             mean = np.mean(X, axis=0)
             std = np.std(X, axis=0, ddof=1)
@@ -206,21 +205,11 @@ class RandomForst():
         
         # if all features are used, return most common class
         if len(features) == 0:
-            #values, counts = np.unique(classes, return_counts=True)
-            #index = np.argmax(counts)
-            #if index == None:
-            #    index = random.randint(0, len(values))
-            #return values[index]
             int_values = classes.astype(int)
-            return np.mean(int_values)
+            return round(np.mean(int_values))
 
         # if all samples is empty, return most common class
         if len(samples) == 0:
-            #values, counts = np.unique(parent_classes, return_counts=True)
-            #index = np.argmax(counts)
-            #if index == None:
-            #    index = random.randint(0, len(values))
-            #return values[index]
             int_values = parent_classes.astype(int)
             return round(np.mean(int_values))
 
@@ -248,12 +237,6 @@ class RandomForst():
         # finding minimum entropy feature
         min_entropy_feature_index = entropy_sorted_features[0]
         
-        #min_entropy = sys.maxsize
-        #for i in range(0, np.size(weighted_average_entropies, axis=0)):
-        #    if (weighted_average_entropies[i] <= min_entropy):
-        #        if i in random_features:
-        #            min_entropy = weighted_average_entropies[i]
-        #            min_entropy_feature_index = i
 
         # create a node for the minimum entropy feature index
         treeRoot = decisionTreeNode(min_entropy_feature_index)
@@ -308,12 +291,10 @@ class RandomForst():
             tree_samples, tree_classes,tree_prices = self.bagging(samples,classes,self.training_prices, M)
             tree = self.myDT(tree_samples, tree_classes, features,feature_unique_values)
             rmse,smape = self.validation(tree_samples,tree_classes,tree_prices,[tree])
-            print(f"Smape : {smape} - {rmse}")
             random_forest.append(tree)
             training_smapes.append(smape)
         training_smapes = np.asarray(training_smapes)
         sorted_indices = np.argsort(training_smapes)
-        print(f"{training_smapes} : {sorted_indices}")
         sorted_forest = [random_forest[i] for i in sorted_indices]
         return random_forest[:self.num_trees]
 
@@ -361,7 +342,7 @@ class RandomForst():
             total_squared_error += squared_error
         batch_se = total_squared_error / len(validation_vector)
         rmse = math.sqrt(batch_se)
-        print("\nRMSE\n", rmse)
+        
 
         # SMAPE
         total = 0
@@ -372,13 +353,27 @@ class RandomForst():
             sample_smape = difference / (abs(actual) + abs(prediction))
             total += sample_smape
         smape = (total / len(validation_vector))
-        print("\nSMAPE\n", smape)
-        print()
         return rmse,smape
 
 def main():
-    d = Data(binSize=100000)
-    rf = RandomForst(d,num_trees=10)
+    num_trees = 10
+    binSize = 25000
+    bin_classification = False
+    epochs = 200000
+    eta = 0.001
+    if(len(sys.argv)>1):
+        num_trees = int(sys.argv[1])
+    if(len(sys.argv)>2):
+        binSize = int(sys.argv[2])
+        bin_classification = True
+    if(len(sys.argv)>3):
+        epochs = int(sys.argv[3])
+    if(len(sys.argv)>3):
+        eta = float(sys.argv[4])
+        
+    print(f"Running with Parameters:num_trees:{num_trees} binSize:{binSize} bin_classification:{bin_classification} epochs:{epochs} eta:{eta}")
+    d = Data(binSize=binSize)
+    rf = RandomForst(d,num_trees,bin_classification,epochs,eta)
     rf.process()
     
 
