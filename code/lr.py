@@ -52,8 +52,8 @@ class LinearRegression():
             sample_smape = difference / (abs(actual) + abs(prediction))
             total += sample_smape
         smape = (total / len(validation_vector))
-        print("\nSMAPE\n", smape)
-        print()
+        print(f"Final Results RMSE = {rmse} SMAPE = {smape}")
+        
     # Linear Regression Function
     def myLR(self,training_data, training_classes, validation_data):
         
